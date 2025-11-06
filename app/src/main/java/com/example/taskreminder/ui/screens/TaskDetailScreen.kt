@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.taskreminder.data.entity.Subject
@@ -21,19 +22,42 @@ import java.util.*
 @Composable
 fun TaskDetailScreen(
     task: Task?,
+    isNewTask: Boolean,
     subjects: List<Subject>,
     onSave: (Task) -> Unit,
     onDelete: (Task) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var title by remember { mutableStateOf(task?.title ?: "") }
-    var description by remember { mutableStateOf(task?.description ?: "") }
-    var notes by remember { mutableStateOf(task?.notes ?: "") }
-    var selectedSubjectId by remember { mutableStateOf(task?.subjectId) }
-    var selectedPriority by remember { mutableStateOf(task?.priority ?: TaskPriority.MEDIUM) }
-    var selectedStatus by remember { mutableStateOf(task?.status ?: TaskStatus.TODO) }
-    var deadline by remember { mutableStateOf(task?.deadline) }
+    var title by rememberSaveable { mutableStateOf("") }
+    var description by rememberSaveable { mutableStateOf("") }
+    var notes by rememberSaveable { mutableStateOf("") }
+    var selectedSubjectId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var selectedPriority by rememberSaveable { mutableStateOf(TaskPriority.MEDIUM) }
+    var selectedStatus by rememberSaveable { mutableStateOf(TaskStatus.TODO) }
+    var deadline by rememberSaveable { mutableStateOf<Long?>(null) }
+
+    LaunchedEffect(task?.id, isNewTask) {
+        if (!isNewTask && task != null) {
+            title = task.title
+            description = task.description
+            notes = task.notes
+            selectedSubjectId = task.subjectId
+            selectedPriority = task.priority
+            selectedStatus = task.status
+            deadline = task.deadline
+        }
+
+        if (isNewTask && task == null) {
+            title = ""
+            description = ""
+            notes = ""
+            selectedSubjectId = null
+            selectedPriority = TaskPriority.MEDIUM
+            selectedStatus = TaskStatus.TODO
+            deadline = null
+        }
+    }
 
     var showSubjectDialog by remember { mutableStateOf(false) }
     var showPriorityDialog by remember { mutableStateOf(false) }
@@ -43,14 +67,14 @@ fun TaskDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (task == null) "New Task" else "Edit Task") },
+                title = { Text(if (isNewTask) "New Task" else "Edit Task") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
-                    if (task != null) {
+                    if (!isNewTask && task != null) {
                         IconButton(onClick = { showDeleteDialog = true }) {
                             Icon(Icons.Default.Delete, contentDescription = "Delete")
                         }
