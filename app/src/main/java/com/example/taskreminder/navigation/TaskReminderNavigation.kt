@@ -76,6 +76,7 @@ fun TaskReminderApp(
 
                 TaskDetailScreen(
                     task = task,
+                    isNewTask = taskId == null,
                     subjects = subjects,
                     onSave = { newTask ->
                         if (taskId == null) {
